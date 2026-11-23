@@ -10,6 +10,7 @@ x-python: &python
     DB_PASSWORD: ${DB_PASSWORD:-local-db-demo}
     AUTH_KEY: ${AUTH_KEY:-dev-example-key-local-5300-change-me}
     SEED_DEMO: ${SEED_DEMO:-true}
+    CLAIM_LEASE_SECONDS: ${CLAIM_LEASE_SECONDS:-30}
     REDIS_URL: redis://redis:6379/0
   volumes: [artifacts:/work]
 services:

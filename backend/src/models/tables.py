@@ -1,5 +1,5 @@
-from sqlalchemy import (JSON, Column, ForeignKey, Integer, MetaData, String,
-                        Table, Text)
+from sqlalchemy import (JSON, BigInteger, Column, ForeignKey, Integer, MetaData,
+                        String, Table, Text, UniqueConstraint)
 
 schema = MetaData()
 users = Table('accounts', schema,
@@ -32,6 +32,39 @@ evidence = Table('business_evidence', schema,
     Column('reviewer', String(40)),
     Column('review_note', String(500)),
     Column('reviewed_at', String(32)))
+# Reviewed evidence in the exact order reviews were committed.  A separate
+# table (instead of a column on business_evidence) means existing databases can
+# adopt the feature without altering the original table.
+review_ledger = Table('review_ledger', schema,
+    Column('id', Integer, primary_key=True),
+    Column('evidence_id', ForeignKey('business_evidence.id'), nullable=False, unique=True),
+    Column('seq', BigInteger, nullable=False, unique=True))
+counters = Table('workflow_counters', schema,
+    Column('name', String(40), primary_key=True),
+    Column('value', BigInteger, nullable=False))
+claims = Table('purchase_claims', schema,
+    Column('id', Integer, primary_key=True),
+    Column('status', String(20), nullable=False, index=True),
+    # Only the single unacknowledged batch has open_slot = 1.  Acknowledged
+    # batches keep NULL, so the unique constraint makes the database itself
+    # reject creation of a second open batch.
+    Column('open_slot', Integer, unique=True),
+    Column('claim_token', String(36), nullable=False),
+    Column('terminal', String(64)),
+    Column('claimed_at', String(32), nullable=False),
+    Column('lease_expires_at', String(32), nullable=False),
+    Column('acknowledged_at', String(32)),
+    Column('acknowledged_by', String(40)),
+    Column('last_review_seq', BigInteger, nullable=False),
+    Column('item_count', Integer, nullable=False))
+claim_items = Table('purchase_claim_items', schema,
+    Column('id', Integer, primary_key=True),
+    Column('claim_id', ForeignKey('purchase_claims.id'), nullable=False, index=True),
+    Column('evidence_id', ForeignKey('business_evidence.id'), nullable=False),
+    Column('position', Integer, nullable=False),
+    Column('review_seq', BigInteger, nullable=False),
+    UniqueConstraint('claim_id', 'position', name='uq_claim_item_position'),
+    UniqueConstraint('claim_id', 'evidence_id', name='uq_claim_item_evidence'))
 audit = Table('audit_events', schema,
     Column('id', Integer, primary_key=True),
     Column('actor', String(40), nullable=False),

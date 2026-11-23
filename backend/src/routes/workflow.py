@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy import text
 
 from src.config.settings import cache, engine
 from src.controllers.workflow import download
 from src.models.tables import audit, cases, evidence, runs
-from src.schemas.workflow import CaseForm, LoginForm, ReviewForm
-from src.services import domain, workflow
-from src.services.security import current_user, login, operator, reviewer
+from src.schemas.workflow import AckForm, CaseForm, ClaimForm, LoginForm, ReviewForm
+from src.services import claims, domain, workflow
+from src.services.security import buyer, current_user, login, operator, reviewer
 
 router = APIRouter()
 
@@ -67,3 +67,27 @@ def review_evidence(identity: int, form: ReviewForm, actor=Depends(reviewer)):
 @router.get('/audit')
 def list_audit(_=Depends(current_user)):
     return workflow.recent(audit)
+
+
+@router.post('/claims', status_code=201)
+def claim_batch(form: ClaimForm, actor=Depends(buyer)):
+    """Claim the next reviewed batch.  Returns 204 when nothing is pending."""
+    result = claims.claim(form.terminal, form.token, actor)
+    if result is None:
+        return Response(status_code=204)
+    return result
+
+
+@router.get('/claims')
+def list_claims(_=Depends(buyer)):
+    return claims.recent()
+
+
+@router.get('/claims/{identity}')
+def get_claim(identity: int, _=Depends(buyer)):
+    return claims.detail(identity)
+
+
+@router.post('/claims/{identity}/ack')
+def acknowledge_claim(identity: int, form: AckForm, actor=Depends(buyer)):
+    return claims.acknowledge(identity, form.token, actor)

@@ -10,11 +10,16 @@ from src.config.settings import engine
 from src.middlewares.request import limit_body, request_headers
 from src.models.tables import schema
 from src.routes.workflow import router
+from src.services import claims
 
 
 @asynccontextmanager
 async def lifespan(app):
     schema.create_all(engine)
+    try:
+        claims.backfill_ledger()
+    except Exception:
+        logging.exception('Review ledger backfill failed')
     if os.getenv('SEED_DEMO', 'true').lower() == 'true':
         try:
             seed()

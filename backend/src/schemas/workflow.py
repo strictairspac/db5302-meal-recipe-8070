@@ -15,3 +15,12 @@ class CaseForm(BaseModel):
 
 class ReviewForm(BaseModel):
     note: str = Field(min_length=1, max_length=500)
+
+
+class ClaimForm(BaseModel):
+    terminal: str = Field(min_length=1, max_length=64)
+    token: str | None = Field(default=None, max_length=36)
+
+
+class AckForm(BaseModel):
+    token: str = Field(min_length=1, max_length=36)

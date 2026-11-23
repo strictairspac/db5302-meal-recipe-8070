@@ -6,14 +6,11 @@ from sqlalchemy import and_, or_, select
 
 from src.config.settings import cache, engine
 from src.constants.workflow import Status
-from src.models.tables import audit, cases, evidence, runs
-from src.services import domain
+from src.models.tables import cases, evidence, runs
+from src.services import claims, domain
+from src.services.audit import log
 from src.utils.encoding import canonical
 from src.utils.time import utc_time
-
-
-def log(conn, actor, action, reference):
-    conn.execute(audit.insert().values(actor=actor, action=action, reference=str(reference), created_at=utc_time()))
 
 
 def recent(table):
@@ -100,5 +97,6 @@ def review(identity, note, actor):
                             .values(review_note=note, reviewer=actor, reviewed_at=utc_time())).rowcount
         if count != 1:
             raise HTTPException(409, '该证据已经复核')
+        claims.note_review(conn, identity)
         log(conn, actor, 'review', identity)
         return found(conn, evidence, identity)

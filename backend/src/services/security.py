@@ -50,3 +50,9 @@ def reviewer(user=Depends(current_user)):
     if user['role'] != Role.REVIEWER:
         raise HTTPException(403, '需要复核员权限')
     return user['sub']
+
+
+def buyer(user=Depends(current_user)):
+    if user['role'] != Role.BUYER:
+        raise HTTPException(403, '需要采购员权限')
+    return user['sub']

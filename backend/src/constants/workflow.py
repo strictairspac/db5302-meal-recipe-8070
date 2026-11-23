@@ -5,6 +5,7 @@ class Role(StrEnum):
     OPERATOR = 'operator'
     REVIEWER = 'reviewer'
     VIEWER = 'viewer'
+    BUYER = 'buyer'
 
 
 class Status(StrEnum):
@@ -12,3 +13,8 @@ class Status(StrEnum):
     RUNNING = 'running'
     COMPLETE = 'complete'
     FAILED = 'failed'
+
+
+class ClaimStatus(StrEnum):
+    OPEN = 'open'
+    ACKNOWLEDGED = 'acknowledged'

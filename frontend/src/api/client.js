@@ -9,5 +9,7 @@ export async function request(path, {method='GET', data, token, response=false}=
     error.status = result.status;
     throw error;
   }
-  return response ? result : result.json();
+  if (response) return result;
+  if (result.status === 204) return null;
+  return result.json();
 }
